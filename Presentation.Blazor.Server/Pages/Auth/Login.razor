@@ -1,0 +1,53 @@
+﻿@page "/login"
+@layout UnauthenticatedLayout
+@inherits BasePages.BasePage
+
+<PageTitle>Hydrochoerus - Inicio de Sesión</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small">
+    <MudText Typo="Typo.h2" Align="Align.Center">Bienvenido</MudText>
+    <MudGrid>
+        <MudItem xs="12" sm="12" md="12">
+            <MudTextField @bind-Value="User" Label="Usuario" Variant="Variant.Outlined" InputType="InputType.Text" />
+        </MudItem>
+        <MudItem xs="12" sm="12" md="12">
+            <MudTextField @bind-Value="Password" Label="Contraseña" Variant="Variant.Outlined" InputType="InputType.Password" />
+        </MudItem>
+        <MudItem xs="12" sm="12" md="12">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="LogIn">Inicia Sesión</MudButton>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "redirectTo")]
+    public string wantsToGo { get; set; }
+
+    private string User { get; set; }
+    private string Password { get; set; }
+
+    [Inject] public IAccountManager _accountManager { get; set; }
+
+    private async void LogIn()
+    {
+        if (!string.IsNullOrEmpty(User) && !string.IsNullOrEmpty(Password))
+        {
+            var res = await _accountManager.Login(User, Password);
+            if (res.Succeeded && !string.IsNullOrEmpty(res.Data))
+            {
+                if (string.IsNullOrEmpty(wantsToGo)) _navManager.NavigateTo("/");
+                else _navManager.NavigateTo(wantsToGo);
+            }
+            else
+            {
+                ShowWarning(Snackbar, "Credenciales incorrectas");
+            }
+        }
+        else
+        {
+            ShowWarning(Snackbar, "Informa todos los campos");
+        }
+    }
+}

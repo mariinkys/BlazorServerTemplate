@@ -1,0 +1,120 @@
+﻿@inherits BasePages.BasePage
+
+@if (HasModelLoaded)
+{
+    <MudDataGrid T="RolesListQueryVM" ReadOnly="@ReadOnlyMode" MultiSelection="false" Items="@_model" SortMode="SortMode.Multiple" Filterable="true" Hideable="false" RowClick="OnGridRecordClick">
+        <Columns>
+            <PropertyColumn Property="x => x.Selected" Title="¿Seleccionado?">
+                <CellTemplate>
+                    @if (context.Item.Selected)
+                    {
+                        <MudChip Color="Color.Success">Si</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip Color="Color.Error">No</MudChip>
+                    }
+                </CellTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.Name" Title="Nombre" />
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="RolesListQueryVM" />
+        </PagerContent>
+    </MudDataGrid>
+    <br />
+    @if (ReadOnlyMode)
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="align-end" OnClick="() => ReadOnlyMode = false">Editar</MudButton>
+    }
+    else
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Button" OnClick="@SubmitChanges">Guardar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" ButtonType="ButtonType.Button" OnClick="@CancelChanges">Cancelar</MudButton>
+    }
+}
+
+@code {
+    [Inject] public IRoleManager _manager { get; set; }
+    [Parameter] public int UserId { get; set; }
+
+    private bool ReadOnlyMode { get; set; } = true;
+    private bool HasModelLoaded { get; set; } = false;
+    private RolesListQuery _listQuery = new RolesListQuery();
+    private List<RolesListQueryVM> _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _listQuery.UserId = UserId;
+            await RefreshModel();
+        }
+        catch (Exception ex)
+        {
+            ShowError(Snackbar, ex.Message);
+        }
+        finally
+        {
+            HasModelLoaded = true;
+        }
+    }
+
+    private void OnGridRecordClick(DataGridRowClickEventArgs<RolesListQueryVM> args)
+    {
+        if (!ReadOnlyMode)
+        {
+            args.Item.Selected = !args.Item.Selected;
+        }
+    }
+
+    private async Task RefreshModel()
+    {
+
+        try
+        {
+            HasModelLoaded = false;
+            var data = await _manager.GetList(_listQuery);
+            _model = (List<RolesListQueryVM>)data.Data;
+        }
+        catch (Exception ex)
+        {
+            ShowError(Snackbar, ex.Message);
+        }
+        finally
+        {
+            HasModelLoaded = true;
+        }
+    }
+
+    private async Task SubmitChanges()
+    {
+        EditUserRolesCommand command = new EditUserRolesCommand();
+        command.UserId = UserId;
+        command.CurrentModel = _model;
+        try
+        {
+            var res = await _manager.EditUserRoles(command);
+            if (res.Succeeded && res.Data.Equals(true))
+            {
+                await RefreshModel();
+                ShowSuccess(Snackbar, "Roles Editados Correctamente");
+                ReadOnlyMode = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError(Snackbar, ex.Message);
+        }
+        finally
+        {
+            await RefreshModel();
+        }
+    }
+
+    private async Task CancelChanges()
+    {
+        await RefreshModel();
+        ReadOnlyMode = true;
+    }
+}

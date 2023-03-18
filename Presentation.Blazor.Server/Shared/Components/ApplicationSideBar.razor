@@ -1,0 +1,46 @@
+﻿@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<MudDrawer @bind-Open="_sidebarOpen" Elevation="1">
+    <MudDrawerHeader>
+        <MudText Typo="Typo.h5" Color="Color.Primary" Align="Align.Center">Application Name</MudText>
+    </MudDrawerHeader>
+    <MudNavMenu>
+        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+        @if (IsAdmin)
+        {
+            <MudNavLink Href="/users" Icon="@Icons.Material.Filled.ManageAccounts">Usuarios</MudNavLink>
+        }
+        @*<MudNavGroup Title="Expanding" Icon="@Icons.Material.Filled.DashboardCustomize" Expanded="true">
+        <MudNavLink Href="#" Icon="@Icons.Material.Filled.Camera">Photos</MudNavLink>
+        <MudNavLink Href="#" Icon="@Icons.Material.Filled.Celebration">Party</MudNavLink>
+        </MudNavGroup>*@
+    </MudNavMenu>
+</MudDrawer>
+
+@code {
+    [Parameter] public bool _sidebarOpen { get; set; }
+
+    private bool IsAdmin { get; set; } = false;
+    protected override async Task OnParametersSetAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            var c = user.FindAll(c => c.Type == ClaimTypes.Role);
+            if (c.Any())
+            {
+                foreach (var role in c)
+                {
+                    if (role.Value.ToLower().Equals("admin")) IsAdmin = true;
+                }
+            }
+        }
+        else
+        {
+            IsAdmin = false;
+        }
+
+    }
+}

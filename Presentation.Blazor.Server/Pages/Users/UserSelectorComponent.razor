@@ -1,0 +1,66 @@
+﻿@inherits BasePages.BasePage
+
+@if (HasModelLoaded)
+{
+    @if (_model.Any())
+    {
+        <MudSelect T="int?" Label="User Selector" @bind-Value="SelectedValue" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" Disabled="@DisableSelector" Clearable="true" Required="true">
+            @foreach (var item in _model)
+            {
+                <MudSelectItem T="int?" Value="@item.Id">@item.DisplayName</MudSelectItem>
+            }
+        </MudSelect>
+    }
+    else
+    {
+        <MudText Typo="Typo.body1">No hay registros</MudText>
+    }
+}
+else
+{
+
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-8" />
+}
+
+@code {
+    [Inject] public IUserManager _manager { get; set; }
+
+    [Parameter] public bool DisableSelector { get; set; } = false;
+    [Parameter] public EventCallback<int?> SelectedValueChanged { get; set; }
+
+    int? _selectedValue { get; set; }
+    [Parameter]
+    public int? SelectedValue
+    {
+        get => _selectedValue;
+        set
+        {
+            if (_selectedValue.Equals(value)) { return; }
+            _selectedValue = value;
+            SelectedValueChanged.InvokeAsync(value);
+        }
+    }
+
+    private UsersSelectorQuery _query = new UsersSelectorQuery();
+    private List<UsersSelectorQueryVM> _model = new List<UsersSelectorQueryVM>();
+
+    private bool HasModelLoaded { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var res = await _manager.GetSelector(_query);
+            _model = (List<UsersSelectorQueryVM>)res.Data;
+        }
+        catch (Exception ex)
+        {
+            ShowError(Snackbar, ex.Message);
+        }
+        finally
+        {
+            HasModelLoaded = true;
+        }
+    }
+
+}

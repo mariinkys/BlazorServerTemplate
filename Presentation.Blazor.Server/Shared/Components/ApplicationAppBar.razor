@@ -1,0 +1,37 @@
+﻿<MudAppBar Elevation="3">
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleSidebar" />
+    <MudSpacer />
+    @if (!_isDarkMode)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.Brightness4" Color="Color.Inherit" OnClick="ToggleTheme" />
+    }
+    else
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.Brightness5" Color="Color.Inherit" OnClick="ToggleTheme" />
+    }
+    <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="LogOut" />
+</MudAppBar>
+
+@code{
+    [Parameter] public bool _isDarkMode { get; set; }
+    [Parameter] public EventCallback ToggleThemeEC { get; set; }
+    [Parameter] public EventCallback ToggleSidebarEC { get; set; }
+
+    [Inject] public IAccountManager _accountManager { get; set; }
+
+    public async void LogOut()
+    {
+        await _accountManager.Logout();
+    }
+
+    public void ToggleTheme()
+    {
+        ToggleThemeEC.InvokeAsync();
+    }
+
+    public void ToggleSidebar()
+    {
+        ToggleSidebarEC.InvokeAsync();
+    }
+
+}

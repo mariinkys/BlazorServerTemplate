@@ -1,0 +1,40 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>Application - Server</PageTitle>
+
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<AuthorizeView>
+    <Authorized>
+        <MudLayout>
+            <ApplicationAppBar _isDarkMode="_isDarkMode" ToggleThemeEC="() => _isDarkMode = !_isDarkMode" ToggleSidebarEC="() => _sidebarOpen = !_sidebarOpen" />
+            <ApplicationSideBar _sidebarOpen="_sidebarOpen" />
+            <MudMainContent Class="pt-16 px-16">
+                <MudContainer Class="mt-6">
+                    @Body
+                </MudContainer>
+            </MudMainContent>
+        </MudLayout>
+    </Authorized>
+    <NotAuthorized>
+        @{
+            var wantsToGo = _navManager.ToBaseRelativePath(_navManager.Uri);
+            if (string.IsNullOrEmpty(wantsToGo))
+            {
+                _navManager.NavigateTo("login");
+            }
+            else
+            {
+                _navManager.NavigateTo("login/?redirectTo=" + wantsToGo);
+            }
+        }
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private bool _sidebarOpen { get; set; }
+    private bool _isDarkMode { get; set; }
+    private MudTheme _theme = new();
+}

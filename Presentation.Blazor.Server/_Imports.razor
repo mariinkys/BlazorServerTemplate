@@ -1,0 +1,30 @@
+﻿@using System.Net.Http
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.JSInterop
+@using Presentation.Blazor.Server
+@using Presentation.Blazor.Server.Shared
+@using Presentation.Blazor.Server.Shared.Components
+@using Presentation.Shared.Managers
+@using MudBlazor
+@using MudBlazor.Services
+@using System.Security.Claims;
+@using Blazored.FluentValidation
+
+@*QUERIES*@
+@using Application.Shared.Features.User.Queries
+@using Application.Shared.Features.Role.Queries
+
+@*COMMANDS*@
+@using Application.Shared.Features.User.Commands
+@using Application.Shared.Features.Role.Commands
+
+@*COMPONENTS*@
+@using Presentation.Blazor.Server.Pages.Roles
+
+@inject ISnackbar Snackbar
+@inject NavigationManager _navManager

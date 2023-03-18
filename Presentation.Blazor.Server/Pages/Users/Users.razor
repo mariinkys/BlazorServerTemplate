@@ -1,0 +1,102 @@
+﻿@page "/users"
+@inherits BasePages.BasePage
+
+<AuthorizeView Roles="ADMIN" Context="Users">
+    <Authorized>
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="6">
+                <MudText Typo="Typo.h3">Usuarios</MudText>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="6" Style="text-align:end;">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="align-end" OnClick="AddNew">Nuevo Usuario</MudButton>
+            </MudItem>
+        </MudGrid>
+        @if (HasModelLoaded)
+        {
+            <br />
+            @if (_model.Any())
+            {
+                <MudDataGrid T="UsersListQueryVM" MultiSelection="false" Items="@_model" SortMode="SortMode.Multiple" Filterable="true" Hideable="false" RowClick="OnGridRecordClick">
+                    <Columns>
+                        <PropertyColumn Property="x => x.Id" Title="Id" Filterable="false" />
+                        <PropertyColumn Property="x => x.UserName" Title="Nombre de Usuario" />
+                        <PropertyColumn Property="x => x.Name" Title="Nombre" />
+                        <PropertyColumn Property="x => x.Surnames" Title="Apellido" />
+                    </Columns>
+                    <PagerContent>
+                        <MudDataGridPager T="UsersListQueryVM" />
+                    </PagerContent>
+                </MudDataGrid>
+            }
+            else
+            {
+                <MudText Typo="Typo.body1" Align="Align.Center">No hay registros...</MudText>
+            }
+
+        }
+        else
+        {
+            <ModelLoadingComponent />
+        }
+    </Authorized>
+    <NotAuthorized>
+        @{
+            _navManager.NavigateTo("/");
+        }
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Inject] public IUserManager _manager { get; set; }
+
+    private bool HasModelLoaded { get; set; } = false;
+    private UsersListQuery _listQuery = new UsersListQuery();
+    private List<UsersListQueryVM> _model = new();
+
+    private int clickedToDeleteId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await RefreshModel();
+        }
+        catch (Exception ex)
+        {
+            ShowError(Snackbar, ex.Message);
+        }
+        finally
+        {
+            HasModelLoaded = true;
+        }
+    }
+
+    private void OnGridRecordClick(DataGridRowClickEventArgs<UsersListQueryVM> args)
+    {
+        _navManager.NavigateTo("user?Id=" + args.Item.Id);
+    }
+
+    private async Task RefreshModel()
+    {
+
+        try
+        {
+            HasModelLoaded = false;
+            var data = await _manager.GetList(_listQuery);
+            _model = (List<UsersListQueryVM>)data.Data;
+        }
+        catch (Exception ex)
+        {
+            ShowError(Snackbar, ex.Message);
+        }
+        finally
+        {
+            HasModelLoaded = true;
+        }
+    }
+
+    private void AddNew()
+    {
+        _navManager.NavigateTo("user");
+    }
+}

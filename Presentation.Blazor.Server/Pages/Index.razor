@@ -1,0 +1,16 @@
+﻿@page "/"
+
+<PageTitle>Index</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <h1>Hello, world!</h1>
+
+        Welcome to your new app.
+    </Authorized>
+    <NotAuthorized>
+        @{
+            _navManager.NavigateTo("/");
+        }
+    </NotAuthorized>
+</AuthorizeView>

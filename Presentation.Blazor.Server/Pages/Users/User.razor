@@ -1,0 +1,169 @@
+﻿@page "/user"
+@inherits BasePages.BasePage
+
+<AuthorizeView Roles="ADMIN" Context="User">
+    <Authorized>
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="6">
+                <MudText Typo="Typo.h3">Usuario</MudText>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="6" Style="text-align:end;">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="PageEditMode" Class="align-end" OnClick="() => PageEditMode = true">Editar</MudButton>
+            </MudItem>
+        </MudGrid>
+        <br />
+        <EditForm Model="@_model" OnValidSubmit="@HandleValidSubmit">
+            <FluentValidationValidator @ref="_validator" DisableAssemblyScanning="@true"></FluentValidationValidator>
+            <MudGrid>
+                <MudItem xs="12" sm="12" md="2">
+                    <MudNumericField @bind-Value="@_model.Id" Label="Id" Variant="Variant.Outlined" Disabled="true" />
+                </MudItem>
+                <MudItem xs="12" sm="12" md="5">
+                    <MudTextField @bind-Value="@_model.UserName" Disabled="!PageEditMode" Label="Usuario" Variant="Variant.Outlined" InputType="InputType.Text"/>
+                    <ValidationMessage For="@(() => _model.UserName)" />
+                </MudItem>
+                <MudItem xs="12" sm="12" md="5">
+                    <MudTextField @bind-Value="@_model.Email" Label="Mail" Disabled="!PageEditMode" Variant="Variant.Outlined" InputType="InputType.Text" />
+                    <ValidationMessage For="@(() => _model.Email)" />
+                </MudItem>
+
+                <MudItem xs="12" sm="12" md="6">
+                    <MudTextField @bind-Value="@_model.Name" Label="Nombre" Disabled="!PageEditMode" Variant="Variant.Outlined" InputType="InputType.Text" />
+                    <ValidationMessage For="@(() => _model.Name)" />
+                </MudItem>
+                <MudItem xs="12" sm="12" md="6">
+                    <MudTextField @bind-Value="@_model.Surnames" Label="Apellidos"  Disabled="!PageEditMode"  Variant="Variant.Outlined" InputType="InputType.Text" />
+                    <ValidationMessage For="@(() => _model.Surnames)" />
+                </MudItem>
+
+                @if (_model.Id.Equals(0))
+                {
+                    <MudItem xs="12" sm="12" md="12">
+                        <MudTextField @bind-Value="@_model.Password" InputType="InputType.Password" Label="Contraseña"  Disabled="!PageEditMode" Variant="Variant.Outlined" />
+                        <ValidationMessage For="@(() => _model.Password)" />
+                    </MudItem>
+                }
+            </MudGrid>
+            @if (PageEditMode)
+            {
+                <br />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@(!context.Validate())">Guardar</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Error" ButtonType="ButtonType.Button" OnClick="@CancelChanges">Cancelar</MudButton>
+            }
+        </EditForm>
+        @if (!_model.Id.Equals(0))
+        {
+            <br />
+            <MudExpansionPanels>
+                <MudExpansionPanel Text="Roles">
+                    <EditUserRolesComponent UserId="_model.Id"/>
+                </MudExpansionPanel>
+                <MudExpansionPanel Text="Actualizar Contraseña">
+                    <UserUpdatePasswordComponent UserId="_model.Id" />
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        }
+    </Authorized>
+    <NotAuthorized>
+        @{
+            _navManager.NavigateTo("/");
+        }
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Parameter][SupplyParameterFromQuery(Name = "Id")] public int Id { get; set; } = 0;
+
+    [Inject] IUserManager _manager { get; set; }
+
+    private UserEditQuery _editQuery { get; set; } = new();
+    private UserEditCommand _model { get; set; } = new();
+    private FluentValidationValidator _validator { get; set; }
+
+    private bool PageEditMode { get; set; } = false;
+    private bool IsSaving { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            _editQuery.UserId = Id;
+
+            if (_editQuery.UserId.Equals(0))
+            {
+                PageEditMode = true;
+            }
+            else
+            {
+                var data = await _manager.GetById(_editQuery);
+                if (data.Data != null && data.Succeeded)
+                {
+                    _model = data.Data;
+                }
+                else
+                {
+                    _navManager.NavigateTo("users");
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            ShowError(Snackbar, ex.Message);
+        }
+
+    }
+
+    private async Task HandleValidSubmit()
+    {
+
+        try
+        {
+            if (!IsSaving)
+            {
+
+                IsSaving = true;
+                var data = await _manager.Edit(_model);
+
+                if (data != null && data.Succeeded)
+                {
+                    await RefreshModel(data.Data);
+                    PageEditMode = false;
+                }
+                else if (!data.Succeeded)
+                {
+                    if (!string.IsNullOrEmpty(data.Message)) ShowWarning(Snackbar, data.Message);
+                }
+
+                IsSaving = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            IsSaving = false;
+            ShowError(Snackbar, ex.Message);
+        }
+    }
+
+    private async Task CancelChanges()
+    {
+        if (_editQuery.UserId.Equals(0))
+        {
+            _navManager.NavigateTo("users");
+        }
+        else
+        {
+            await RefreshModel(_editQuery.UserId);
+            PageEditMode = false;
+        }
+    }
+
+    private async Task RefreshModel(int Id)
+    {
+        _editQuery.UserId = Id;
+        var data = await _manager.GetById(_editQuery);
+        if (data != null && data.Succeeded) _model = data.Data;
+    }
+
+}
