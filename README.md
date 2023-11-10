@@ -1,4 +1,4 @@
-# BlazorServerTemplate
+# Blazor Server Template Project
 
 This repository contains a Blazor Server Application that follows Clean Architecture and has both authentication and authorization with MudBlazor for the front-end. 
 
